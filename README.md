@@ -222,6 +222,55 @@ Windows 路径可以写成 `C:/path/to/every-db-mcp/dist/index.js`。保存配�
 
 在支持 MCP 的 Agent（例如 Codex）中，用户只需要描述目标。Agent 会理解自然语言，并在后台选择和调用合适的 every-db-mcp 工具。
 
+### 在实际项目中选择正确的数据库
+
+`every-db-mcp` **不会自动把当前项目与某个数据库连接绑定，也不会只根据 SQL 猜测数据库类型**。实际调用分为两步：
+
+1. Agent 根据用户指令、项目约定和工具描述选择一个已配置的数据库 `id`。
+2. MCP 服务器根据该配置项的 `type`，选择 MySQL、GaussDB、Oracle 或 DM8 驱动。
+
+| 配置或约定 | 作用 |
+|------|------|
+| 项目中的 `AGENTS.md` | 告诉 Agent 当前项目应使用哪个数据库 `id` |
+| `database` 工具参数 | 指定本次调用使用的数据库 `id` |
+| `type` | 决定 MCP 使用哪一种数据库驱动 |
+| `defaultDatabase` | 未传入 `database` 时使用的默认连接 |
+
+例如，Agent 选择 `order-system-gaussdb-dev` 后，MCP 会读取该配置项。如果它的 `type` 是 `gaussdb`，查询就会交给 GaussDB 驱动执行。多个项目共用同一个 MCP 服务时，如果 Agent 没有传入 `database`，请求会落到 `defaultDatabase`；因此仅依赖默认值可能误连到其他项目的数据库。
+
+建议为连接使用包含项目、数据库类型和环境的唯一 ID：
+
+```text
+<project>-<database-type>-<environment>
+
+order-system-gaussdb-dev
+user-system-mysql-test
+reporting-oracle-prod
+```
+
+然后在实际项目根目录的 `AGENTS.md` 中固定该项目使用的连接。可以复制下面的模板，并替换数据库 ID：
+
+```md
+## Database
+
+本项目的数据库操作统一使用 every-db-mcp 中的
+`order-system-gaussdb-dev` 数据库连接。
+
+除非用户明确指定并确认，否则禁止连接其他数据库。
+首次查询前，先测试该连接，并报告数据库 ID、类型和连接状态。
+生产数据库只允许执行只读查询；不得执行 INSERT、UPDATE、DELETE 或 DDL。
+```
+
+`AGENTS.md` 中只保存数据库 ID 和操作规则，不要写用户名、密码或其他密钥。数据库凭据仍应保存在 every-db-mcp 的配置文件或 MCP 客户端环境变量中。
+
+配置完成后，可以直接使用自然语言：
+
+> 按照本项目的数据库约定，先测试连接；成功后查询 `orders` 表的前 10 条数据，并告诉我实际使用的数据库 ID 和类型。
+
+如果需要临时访问另一个已配置的连接，应明确写出 ID：
+
+> 使用 `reporting-oracle-prod` 执行只读查询；先确认连接和权限，不要执行任何写操作。
+
 ### Agent 可调用的工具（开发者参考）
 
 下表用于说明 MCP 服务器提供的底层能力，方便开发和排障；普通用户不需要手动输入这些工具名或参数。
