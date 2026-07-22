@@ -1,0 +1,7 @@
+py-opengauss==1.3.10
+oracledb==4.0.2
+dmPython==2.5.38
+cryptography==49.0.0
+cffi==2.1.0
+pycparser==3.0
+typing_extensions==4.16.0

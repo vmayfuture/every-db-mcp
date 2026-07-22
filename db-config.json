@@ -1,0 +1,66 @@
+{
+  "defaultDatabase": "mysql-dev",
+  "defaultAllowInsert": false,
+  "defaultAllowUpdate": false,
+  "defaultAllowDelete": false,
+  "defaultAllowDDL": false,
+  "databases": [
+    {
+      "id": "mysql-dev",
+      "name": "MySQL Database",
+      "type": "mysql",
+      "host": "127.0.0.1",
+      "port": 3306,
+      "user": "your-mysql-user",
+      "password": "your-password",
+      "database": "test",
+      "allowInsert": false,
+      "allowUpdate": false,
+      "allowDelete": false,
+      "allowDDL": false
+    },
+    {
+      "id": "gaussdb-dev",
+      "name": "GaussDB Database",
+      "type": "gaussdb",
+      "host": "127.0.0.1",
+      "port": 8000,
+      "user": "your-gaussdb-user",
+      "password": "your-password",
+      "database": "postgres",
+      "schema": "public",
+      "allowInsert": false,
+      "allowUpdate": false,
+      "allowDelete": false,
+      "allowDDL": false
+    },
+    {
+      "id": "oracle-dev",
+      "name": "Oracle Database",
+      "type": "oracle",
+      "host": "127.0.0.1",
+      "port": 1521,
+      "user": "your-oracle-user",
+      "password": "your-password",
+      "schema": "ORCL",
+      "allowInsert": false,
+      "allowUpdate": false,
+      "allowDelete": false,
+      "allowDDL": false
+    },
+    {
+      "id": "dm8-dev",
+      "name": "DM8 Database",
+      "type": "dm8",
+      "host": "127.0.0.1",
+      "port": 5236,
+      "user": "your-dm8-user",
+      "password": "your-password",
+      "schema": "SYSDBA",
+      "allowInsert": false,
+      "allowUpdate": false,
+      "allowDelete": false,
+      "allowDDL": false
+    }
+  ]
+}

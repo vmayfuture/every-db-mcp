@@ -1,0 +1,25 @@
+{
+    "name":  "every-db-mcp",
+    "version":  "1.0.0",
+    "description":  "Multi-database MCP server supporting MySQL, DM8, Oracle, GaussDB with read/write operations",
+    "type":  "module",
+    "main":  "dist/index.js",
+    "scripts":  {
+                    "build":  "tsc",
+                    "start":  "node dist/index.js",
+                    "dev":  "ts-node src/index.ts"
+                },
+    "dependencies":  {
+                         "@modelcontextprotocol/sdk":  "^1.29.0",
+                         "mysql2":  "^3.23.1",
+                         "oracledb":  "^5.5.0",
+                         "pg":  "^8.7.3",
+                         "zod":  "^3.25.67"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^20.17.50",
+                            "@types/pg":  "^8.11.10",
+                            "ts-node":  "^10.9.2",
+                            "typescript":  "^5.8.3"
+                        }
+}
