@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>every-db-mcp — 多数据库 MCP 服务器文档</title>
+<meta name="description" content="every-db-mcp 中文接入与使用文档：通过 MCP 查询 MySQL、GaussDB、Oracle 和 DM8，查看表结构、测试连接及配置操作权限。">
+<link rel="canonical" href="https://vmayfuture.github.io/every-db-mcp/">
+<link rel="alternate" hreflang="zh-CN" href="https://vmayfuture.github.io/every-db-mcp/">
+<link rel="alternate" hreflang="en" href="https://vmayfuture.github.io/every-db-mcp/en.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="every-db-mcp — 多数据库 MCP 服务器文档">
+<meta property="og:description" content="every-db-mcp 中文接入与使用文档：通过 MCP 查询 MySQL、GaussDB、Oracle 和 DM8，查看表结构、测试连接及配置操作权限。">
+<meta property="og:url" content="https://vmayfuture.github.io/every-db-mcp/">
+<meta property="og:site_name" content="every-db-mcp">
+<link rel="stylesheet" href="site.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"every-db-mcp","codeRepository":"https://github.com/vmayfuture/every-db-mcp","license":"https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE"}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳至正文</a>
+<header><a class="brand" href="index.html">every-db-mcp</a>
+<nav aria-label="文档导航"><a href="index.html" lang="zh-CN">中文</a><a href="en.html" lang="en">English</a><a href="database-guides.html">Database guides</a><a href="https://github.com/vmayfuture/every-db-mcp">GitHub</a></nav></header>
+<main id="main"><h1 id="every-db-mcp-mysqlgaussdboracledm8-mcp">every-db-mcp — MySQL、GaussDB、Oracle、DM8 多数据库 MCP 服务器</h1>
+<p><a href="index.html">中文</a> | <a href="en.html">English</a></p>
+<p><a href="https://vmayfuture.github.io/every-db-mcp/">在线文档</a></p>
+<p><strong>every-db-mcp</strong> 是一个多数据库 Model Context Protocol (MCP) 服务器，支持 MySQL、GaussDB、Oracle 和达梦 (DM8) 四种数据库。它提供了统一的接口来执行查询、数据操作和结构查看，让 AI 助手能够安全地与多种数据库进行交互。</p>
+<h2 id="_1">✨ 特性</h2>
+<ul>
+<li>🗄️ <strong>多数据库支持</strong>: MySQL、GaussDB、Oracle、达梦 (DM8)</li>
+<li>🔒 <strong>权限控制</strong>: 细粒度的读写权限管理，支持按数据库配置 INSERT/UPDATE/DELETE/DDL 权限</li>
+<li>⚡ <strong>连接池管理</strong>: 自动管理数据库连接池，提高性能和资源利用率</li>
+<li>🛡️ <strong>安全保护</strong>: 自动 LIMIT 保护、SQL 类型检查、操作权限验证</li>
+<li>🔧 <strong>灵活配置</strong>: 支持静态配置文件，可配置多个数据库实例</li>
+<li>🌐 <strong>跨平台</strong>: 支持 Windows、Linux、macOS</li>
+</ul>
+<h2 id="_2">🏗️ 架构</h2>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    AI Assistant                         │
+│              (Claude, Codex, CodeBuddy)                 │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼ MCP Protocol
+┌─────────────────────────────────────────────────────────┐
+│                  every-db-mcp                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │   MySQL     │  │  GaussDB    │  │   Oracle    │     │
+│  │  (Node.js)  │  │  (Python)   │  │  (Python)   │     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│  ┌─────────────┐                                       │
+│  │    DM8      │                                       │
+│  │  (Python)   │                                       │
+│  └─────────────┘                                       │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Database Servers                           │
+│    MySQL    GaussDB    Oracle    DM8                    │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<h2 id="_3">🚀 快速开始</h2>
+<h3 id="_4">前置要求</h3>
+<ul>
+<li><strong>Node.js</strong> 22.0 或更高版本</li>
+<li><strong>npm</strong>（随 Node.js 一起安装）</li>
+<li><strong>Python</strong> 3.10 或更高版本（仅用于 GaussDB、Oracle、DM8）</li>
+<li>一个已启动且可访问的目标数据库</li>
+</ul>
+<blockquote>
+<p>如果只使用 MySQL，不需要安装 Python 及 <code>requirements.txt</code> 中的依赖。</p>
+</blockquote>
+<h3 id="1">1. 获取代码并进入项目根目录</h3>
+<p>克隆仓库或解压项目后，进入包含 <code>package.json</code> 和 <code>db-config.json</code> 的目录：</p>
+<pre><code class="language-bash">git clone https://github.com/vmayfuture/every-db-mcp.git
+cd every-db-mcp
+</code></pre>
+<p>如果使用下载的 ZIP，直接解压并在终端中进入解压后的目录即可。</p>
+<h3 id="2-nodejs">2. 安装 Node.js 依赖</h3>
+<pre><code class="language-bash">npm install
+</code></pre>
+<h3 id="3-python">3. 安装 Python 依赖（可选）</h3>
+<p>只有使用 GaussDB、Oracle 或 DM8 时才执行：</p>
+<pre><code class="language-bash">python -m pip install -r requirements.txt
+</code></pre>
+<p>MySQL 使用 Node.js 的 <code>mysql2</code> 驱动，请跳过这一步。</p>
+<h3 id="4">4. 配置数据库连接</h3>
+<h4 id="a-db-configjson">方式 A：编辑 <code>db-config.json</code>（推荐用于多数据库）</h4>
+<p>直接编辑项目根目录中的 <code>db-config.json</code>。当前程序<strong>不会读取</strong> <code>db-config.local.json</code>，因此不要把配置文件改成该名称。</p>
+<p>下面是一个最小 MySQL 配置示例：</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;mysql-local&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [
+    {
+      &quot;id&quot;: &quot;mysql-local&quot;,
+      &quot;name&quot;: &quot;Local MySQL&quot;,
+      &quot;type&quot;: &quot;mysql&quot;,
+      &quot;host&quot;: &quot;127.0.0.1&quot;,
+      &quot;port&quot;: 3306,
+      &quot;user&quot;: &quot;your-mysql-user&quot;,
+      &quot;password&quot;: &quot;your-mysql-password&quot;,
+      &quot;database&quot;: &quot;your-database&quot;,
+      &quot;allowInsert&quot;: false,
+      &quot;allowUpdate&quot;: false,
+      &quot;allowDelete&quot;: false,
+      &quot;allowDDL&quot;: false
+    }
+  ]
+}
+</code></pre>
+<p>请替换用户名、密码和数据库名。建议使用专门的只读账号，不要使用生产环境的 root 账号。</p>
+<h4 id="b-mysql">方式 B：使用环境变量（仅支持单个 MySQL）</h4>
+<p>如果只连接一个 MySQL，也可以在启动服务前设置环境变量。设置了 <code>MYSQL_HOST</code> 后，环境变量配置会优先于 <code>db-config.json</code>。</p>
+<p>PowerShell：</p>
+<pre><code class="language-powershell">$env:MYSQL_HOST = &quot;127.0.0.1&quot;
+$env:MYSQL_PORT = &quot;3306&quot;
+$env:MYSQL_USER = &quot;your-mysql-user&quot;
+$env:MYSQL_PASS = &quot;your-mysql-password&quot;
+$env:MYSQL_DB = &quot;your-database&quot;
+</code></pre>
+<p>Bash：</p>
+<pre><code class="language-bash">export MYSQL_HOST=&quot;127.0.0.1&quot;
+export MYSQL_PORT=&quot;3306&quot;
+export MYSQL_USER=&quot;your-mysql-user&quot;
+export MYSQL_PASS=&quot;your-mysql-password&quot;
+export MYSQL_DB=&quot;your-database&quot;
+</code></pre>
+<h3 id="5-typescript">5. 编译 TypeScript</h3>
+<pre><code class="language-bash">npm run build
+</code></pre>
+<h3 id="6">6. 启动服务</h3>
+<pre><code class="language-bash">npm start
+</code></pre>
+<p>看到下面的日志表示 MCP stdio 服务已启动：</p>
+<pre><code class="language-text">[MCP] every-db-mcp server started on stdio
+</code></pre>
+<p>stdio 服务启动后会等待 MCP 客户端请求，终端看起来没有继续输出是正常现象。按 <code>Ctrl+C</code> 可以停止手动启动的服务。如果 MCP 客户端负责自动拉起服务，则不需要另外执行 <code>npm start</code>。</p>
+<h3 id="7">7. 验证连接和查询</h3>
+<p>在已经配置好 every-db-mcp 的 Agent 对话框中输入下面这句话：</p>
+<blockquote>
+<p>请使用 every-db-mcp 测试默认数据库能否连接。如果连接成功，再执行只读查询 <code>SELECT 1 AS mcp_probe, VERSION() AS mysql_version</code>，最多返回 5 行，并用中文告诉我结果。</p>
+</blockquote>
+<p>Agent 会根据这段自然语言自动选择 MCP 工具。成功时，它会告诉你连接状态，并返回一行包含探测值和 MySQL 版本的结果；用户不需要手动输入工具函数。</p>
+<p>首次调用外部 MCP 时，Agent 可能会显示工具批准提示。连接测试和只读查询确认无误后可以批准；涉及写入、删除或 DDL 的操作应先核对数据库和影响范围。</p>
+<h3 id="mcp">MCP 配置</h3>
+<p>完成 <code>npm run build</code> 后，将以下配置添加到 MCP 客户端。<code>args</code> 应使用本机 <code>dist/index.js</code> 的绝对路径。</p>
+<p>下面的示例使用 <code>MYSQL_*</code> 环境变量连接单个 MySQL，请替换其中的连接信息。如果改用 <code>db-config.json</code>，可以删除 <code>env</code>，但必须确保 MCP 客户端从项目根目录启动该进程。</p>
+<p><strong>Codex</strong> (<code>~/.codex/config.toml</code>；Windows 为 <code>$HOME\.codex\config.toml</code>)：</p>
+<pre><code class="language-toml">[mcp_servers.every-db-mcp]
+command = &quot;node&quot;
+args = [&quot;/absolute/path/to/every-db-mcp/dist/index.js&quot;]
+cwd = &quot;/absolute/path/to/every-db-mcp&quot;
+enabled = true
+
+[mcp_servers.every-db-mcp.env]
+MYSQL_HOST = &quot;127.0.0.1&quot;
+MYSQL_PORT = &quot;3306&quot;
+MYSQL_USER = &quot;your-mysql-user&quot;
+MYSQL_PASS = &quot;your-mysql-password&quot;
+MYSQL_DB = &quot;your-database&quot;
+</code></pre>
+<p>Windows 路径可以写成 <code>C:/path/to/every-db-mcp/dist/index.js</code>。保存配置后，请新建 Agent 会话或重启 Codex，使新注册的 MCP 生效。</p>
+<p><strong>CodeBuddy</strong> (<code>~/.codebuddy/mcp.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;every-db-mcp&quot;: {
+      &quot;command&quot;: &quot;node&quot;,
+      &quot;args&quot;: [&quot;path/to/every-db-mcp/dist/index.js&quot;],
+      &quot;env&quot;: {
+        &quot;MYSQL_HOST&quot;: &quot;127.0.0.1&quot;,
+        &quot;MYSQL_PORT&quot;: &quot;3306&quot;,
+        &quot;MYSQL_USER&quot;: &quot;your-mysql-user&quot;,
+        &quot;MYSQL_PASS&quot;: &quot;your-mysql-password&quot;,
+        &quot;MYSQL_DB&quot;: &quot;your-database&quot;
+      },
+      &quot;disabled&quot;: false,
+      &quot;type&quot;: &quot;stdio&quot;
+    }
+  }
+}
+</code></pre>
+<h2 id="_5">📖 使用指南</h2>
+<p>在支持 MCP 的 Agent（例如 Codex）中，用户只需要描述目标。Agent 会理解自然语言，并在后台选择和调用合适的 every-db-mcp 工具。</p>
+<h3 id="_6">在实际项目中选择正确的数据库</h3>
+<p><code>every-db-mcp</code> <strong>不会自动把当前项目与某个数据库连接绑定，也不会只根据 SQL 猜测数据库类型</strong>。实际调用分为两步：</p>
+<ol>
+<li>Agent 根据用户指令、项目约定和工具描述选择一个已配置的数据库 <code>id</code>。</li>
+<li>MCP 服务器根据该配置项的 <code>type</code>，选择 MySQL、GaussDB、Oracle 或 DM8 驱动。</li>
+</ol>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>配置或约定</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>项目中的 <code>AGENTS.md</code></td>
+<td>告诉 Agent 当前项目应使用哪个数据库 <code>id</code></td>
+</tr>
+<tr>
+<td><code>database</code> 工具参数</td>
+<td>指定本次调用使用的数据库 <code>id</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>决定 MCP 使用哪一种数据库驱动</td>
+</tr>
+<tr>
+<td><code>defaultDatabase</code></td>
+<td>未传入 <code>database</code> 时使用的默认连接</td>
+</tr>
+</tbody>
+</table></div>
+<p>例如，Agent 选择 <code>order-system-gaussdb-dev</code> 后，MCP 会读取该配置项。如果它的 <code>type</code> 是 <code>gaussdb</code>，查询就会交给 GaussDB 驱动执行。多个项目共用同一个 MCP 服务时，如果 Agent 没有传入 <code>database</code>，请求会落到 <code>defaultDatabase</code>；因此仅依赖默认值可能误连到其他项目的数据库。</p>
+<p>建议为连接使用包含项目、数据库类型和环境的唯一 ID：</p>
+<pre><code class="language-text">&lt;project&gt;-&lt;database-type&gt;-&lt;environment&gt;
+
+order-system-gaussdb-dev
+user-system-mysql-test
+reporting-oracle-prod
+</code></pre>
+<p>然后在实际项目根目录的 <code>AGENTS.md</code> 中固定该项目使用的连接。可以复制下面的模板，并替换数据库 ID：</p>
+<pre><code class="language-md">## Database
+
+本项目的数据库操作统一使用 every-db-mcp 中的
+`order-system-gaussdb-dev` 数据库连接。
+
+除非用户明确指定并确认，否则禁止连接其他数据库。
+首次查询前，先测试该连接，并报告数据库 ID、类型和连接状态。
+生产数据库只允许执行只读查询；不得执行 INSERT、UPDATE、DELETE 或 DDL。
+</code></pre>
+<p><code>AGENTS.md</code> 中只保存数据库 ID 和操作规则，不要写用户名、密码或其他密钥。数据库凭据仍应保存在 every-db-mcp 的配置文件或 MCP 客户端环境变量中。</p>
+<p>配置完成后，可以直接使用自然语言：</p>
+<blockquote>
+<p>按照本项目的数据库约定，先测试连接；成功后查询 <code>orders</code> 表的前 10 条数据，并告诉我实际使用的数据库 ID 和类型。</p>
+</blockquote>
+<p>如果需要临时访问另一个已配置的连接，应明确写出 ID：</p>
+<blockquote>
+<p>使用 <code>reporting-oracle-prod</code> 执行只读查询；先确认连接和权限，不要执行任何写操作。</p>
+</blockquote>
+<h3 id="agent">Agent 可调用的工具（开发者参考）</h3>
+<p>下表用于说明 MCP 服务器提供的底层能力，方便开发和排障；普通用户不需要手动输入这些工具名或参数。</p>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>描述</th>
+<th>参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>db_query</code></td>
+<td>执行 SELECT 查询</td>
+<td><code>sql</code>, <code>database?</code>, <code>maxRows?</code></td>
+</tr>
+<tr>
+<td><code>db_execute</code></td>
+<td>执行 INSERT/UPDATE/DELETE/DDL</td>
+<td><code>sql</code>, <code>database?</code></td>
+</tr>
+<tr>
+<td><code>db_list_databases</code></td>
+<td>列出所有配置的数据库</td>
+<td>-</td>
+</tr>
+<tr>
+<td><code>db_test_connection</code></td>
+<td>测试数据库连接</td>
+<td><code>database?</code></td>
+</tr>
+<tr>
+<td><code>db_get_table_structure</code></td>
+<td>获取表结构</td>
+<td><code>tableName</code>, <code>database?</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_7">自然语言使用示例</h3>
+<h4 id="_8">查询数据</h4>
+<blockquote>
+<p>查询默认数据库中 <code>users</code> 表的前 10 条数据，并用表格展示。</p>
+<p>使用 <code>gaussdb-dev</code> 数据库查询 <code>orders</code> 表，并概括查询结果。</p>
+<p>查询 <code>products</code> 表，最多返回 50 行。</p>
+</blockquote>
+<h4 id="_9">数据操作</h4>
+<blockquote>
+<p>请先检查默认数据库是否允许新增数据。如果允许，在 <code>users</code> 表中新增一位名为 John、邮箱为 <code>john@example.com</code> 的用户，并告诉我执行结果。</p>
+<p>将 <code>users</code> 表中 ID 为 1 的用户姓名改为 Jane；执行前先说明将影响哪条记录。</p>
+<p>删除 <code>users</code> 表中 ID 为 1 的记录；先确认当前连接是否允许删除，并在执行前向我确认。</p>
+</blockquote>
+<p>写入、更新、删除和 DDL 操作只有在对应权限开关已启用时才会执行。生产环境建议保持这些权限关闭。</p>
+<h4 id="_10">查看表结构</h4>
+<blockquote>
+<p>查看默认数据库中 <code>users</code> 表的结构，并说明每个字段的类型。</p>
+<p>查看 <code>oracle-dev</code> 数据库中 <code>orders</code> 表的结构。</p>
+</blockquote>
+<h4 id="_11">测试连接</h4>
+<blockquote>
+<p>测试默认数据库是否可以正常连接，并告诉我数据库类型和连接状态。</p>
+<p>测试 <code>dm8-dev</code> 数据库是否可以正常连接；如果失败，请概括错误原因。</p>
+</blockquote>
+<h2 id="_12">🗄️ 数据库配置</h2>
+<h3 id="mysql">MySQL</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;mysql-dev&quot;,
+  &quot;type&quot;: &quot;mysql&quot;,
+  &quot;host&quot;: &quot;127.0.0.1&quot;,
+  &quot;port&quot;: 3306,
+  &quot;user&quot;: &quot;your-mysql-user&quot;,
+  &quot;password&quot;: &quot;your-mysql-password&quot;,
+  &quot;database&quot;: &quot;your-database&quot;,
+  &quot;allowInsert&quot;: false,
+  &quot;allowUpdate&quot;: false,
+  &quot;allowDelete&quot;: false,
+  &quot;allowDDL&quot;: false
+}
+</code></pre>
+<h3 id="gaussdb">GaussDB</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;gaussdb-dev&quot;,
+  &quot;type&quot;: &quot;gaussdb&quot;,
+  &quot;host&quot;: &quot;localhost&quot;,
+  &quot;port&quot;: 8000,
+  &quot;user&quot;: &quot;user&quot;,
+  &quot;password&quot;: &quot;password&quot;,
+  &quot;database&quot;: &quot;postgres&quot;,
+  &quot;schema&quot;: &quot;public&quot;,
+  &quot;allowInsert&quot;: false,
+  &quot;allowUpdate&quot;: false,
+  &quot;allowDelete&quot;: false,
+  &quot;allowDDL&quot;: false
+}
+</code></pre>
+<h3 id="oracle">Oracle</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;oracle-dev&quot;,
+  &quot;type&quot;: &quot;oracle&quot;,
+  &quot;host&quot;: &quot;localhost&quot;,
+  &quot;port&quot;: 1521,
+  &quot;user&quot;: &quot;user&quot;,
+  &quot;password&quot;: &quot;password&quot;,
+  &quot;schema&quot;: &quot;ORCL&quot;,
+  &quot;allowInsert&quot;: false,
+  &quot;allowUpdate&quot;: false,
+  &quot;allowDelete&quot;: false,
+  &quot;allowDDL&quot;: false
+}
+</code></pre>
+<h3 id="dm8">DM8 (达梦)</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;dm8-dev&quot;,
+  &quot;type&quot;: &quot;dm8&quot;,
+  &quot;host&quot;: &quot;localhost&quot;,
+  &quot;port&quot;: 5236,
+  &quot;user&quot;: &quot;user&quot;,
+  &quot;password&quot;: &quot;password&quot;,
+  &quot;schema&quot;: &quot;SYSDBA&quot;,
+  &quot;allowInsert&quot;: false,
+  &quot;allowUpdate&quot;: false,
+  &quot;allowDelete&quot;: false,
+  &quot;allowDDL&quot;: false
+}
+</code></pre>
+<h2 id="_13">🔒 权限说明</h2>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>权限</th>
+<th>描述</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>allowInsert</code></td>
+<td>允许 INSERT 操作</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>allowUpdate</code></td>
+<td>允许 UPDATE 操作</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>allowDelete</code></td>
+<td>允许 DELETE 操作</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>allowDDL</code></td>
+<td>允许 DDL 操作 (CREATE/ALTER/DROP)</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>安全提示</strong>: 生产环境建议将所有写操作权限设置为 <code>false</code>，仅开启 SELECT 查询。</p>
+</blockquote>
+<h2 id="_14">🛠️ 开发</h2>
+<h3 id="_15">项目结构</h3>
+<pre><code>every-db-mcp/
+├── src/
+│   ├── index.ts          # MCP Server 入口
+│   ├── config.ts         # 配置加载
+│   ├── factory.ts        # 连接池工厂
+│   ├── permissions.ts    # 权限控制
+│   ├── types.ts          # 类型定义
+│   └── pools/
+│       ├── mysql.ts      # MySQL 连接池
+│       ├── gaussdb.ts    # GaussDB 连接池
+│       ├── oracle.ts     # Oracle 连接池
+│       └── dm8.ts        # DM8 连接池
+├── package.json          # Node.js 依赖
+├── tsconfig.json         # TypeScript 配置
+├── db-config.json        # 数据库配置
+├── requirements.txt      # Python 依赖
+└── README.md             # 项目文档
+</code></pre>
+<h3 id="_16">构建</h3>
+<pre><code class="language-bash">npm run build
+</code></pre>
+<h3 id="_17">运行</h3>
+<pre><code class="language-bash">npm start
+</code></pre>
+<h3 id="_18">测试</h3>
+<p>当前仓库尚未配置自动化 <code>test</code> 脚本。提交改动前至少应执行 <code>npm run build</code>，然后在 Agent 中用自然语言要求它测试数据库连接并执行一条只读查询，完成端到端验证。</p>
+<h2 id="_19">🤝 贡献</h2>
+<p>欢迎提交 Issue 和 Pull Request！</p>
+<ol>
+<li>Fork 本仓库</li>
+<li>创建特性分支 (<code>git checkout -b feature/AmazingFeature</code>)</li>
+<li>提交更改 (<code>git commit -m 'Add some AmazingFeature'</code>)</li>
+<li>推送到分支 (<code>git push origin feature/AmazingFeature</code>)</li>
+<li>开启 Pull Request</li>
+</ol>
+<h2 id="_20">📄 许可证</h2>
+<p>本项目采用 MIT 许可证 - 查看 <a href="https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE">LICENSE</a> 文件了解详情。</p>
+<h2 id="_21">🙏 致谢</h2>
+<ul>
+<li><a href="https://modelcontextprotocol.io/">Model Context Protocol</a> - MCP 协议支持</li>
+<li><a href="https://github.com/sidorares/node-mysql2">mysql2</a> - MySQL Node.js 驱动</li>
+<li><a href="https://gitee.com/opengauss/openGauss-connector-python">py-opengauss</a> - GaussDB Python 驱动</li>
+<li><a href="https://oracle.github.io/python-oracledb/">oracledb</a> - Oracle Python 驱动</li>
+<li><a href="https://www.dameng.com/">dmPython</a> - 达梦数据库 Python 驱动</li>
+</ul>
+<hr>
+<p><strong>注意</strong>: 本项目仅供学习和开发使用。在生产环境中使用时，请确保遵循最佳安全实践，包括使用只读权限、定期轮换密码、启用 SSL 连接等。</p>
+<h2 id="_22">接入指南与常见问题</h2>
+<p>完整配置、客户端启动目录和只读探测 SQL 见 <a href="database-guides.html">数据库接入指南</a>。适合研发环境表结构理解、订单数据排查和跨数据库结果比较；调用时指定数据库 ID，并使用目标数据库方言。</p>
+<ul>
+<li><strong>为什么只看见 MySQL？</strong> <code>MYSQL_HOST</code> 会替换文件中的连接列表；多数据库接入请移除单库环境配置。</li>
+<li><strong>Oracle 的 schema 是什么？</strong> 当前驱动把它用作 service name，不是表所属用户。</li>
+<li><strong>四种驱动都已实测吗？</strong> 驱动实现不证明全部版本和平台兼容，请分别验证真实连接和只读查询。</li>
+</ul></main>
+<footer><a href="https://github.com/vmayfuture/every-db-mcp">Source repository</a> · <a href="https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE">MIT License</a></footer>
+</body>
+</html>

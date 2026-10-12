@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>every-db-mcp — Multi-database MCP server documentation</title>
+<meta name="description" content="Install and configure every-db-mcp for MySQL, GaussDB, Oracle and DM8: connection tests, database queries, table inspection and explicit write permissions.">
+<link rel="canonical" href="https://vmayfuture.github.io/every-db-mcp/en.html">
+<link rel="alternate" hreflang="zh-CN" href="https://vmayfuture.github.io/every-db-mcp/">
+<link rel="alternate" hreflang="en" href="https://vmayfuture.github.io/every-db-mcp/en.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="every-db-mcp — Multi-database MCP server documentation">
+<meta property="og:description" content="Install and configure every-db-mcp for MySQL, GaussDB, Oracle and DM8: connection tests, database queries, table inspection and explicit write permissions.">
+<meta property="og:url" content="https://vmayfuture.github.io/every-db-mcp/en.html">
+<meta property="og:site_name" content="every-db-mcp">
+<link rel="stylesheet" href="site.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"every-db-mcp","codeRepository":"https://github.com/vmayfuture/every-db-mcp","license":"https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE"}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header><a class="brand" href="index.html">every-db-mcp</a>
+<nav aria-label="Documentation navigation"><a href="index.html" lang="zh-CN">中文</a><a href="en.html" lang="en">English</a><a href="database-guides.html">Database guides</a><a href="https://github.com/vmayfuture/every-db-mcp">GitHub</a></nav></header>
+<main id="main"><h1 id="every-db-mcp-multi-database-mcp-server-for-mysql-gaussdb-oracle-and-dm8">every-db-mcp — Multi-database MCP server for MySQL, GaussDB, Oracle and DM8</h1>
+<p><a href="index.html">中文</a> | <a href="en.html">English</a></p>
+<p><a href="https://vmayfuture.github.io/every-db-mcp/">Online documentation</a></p>
+<p>every-db-mcp is a Model Context Protocol (MCP) stdio server for database queries, table structure inspection, connection tests and explicitly enabled writes. MySQL uses Node.js/mysql2; GaussDB, Oracle and Dameng DM8 use Python subprocess bridges. It selects configured database IDs, not automatic project detection or SQL dialect inference.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Requirements: Node.js 22+, npm and a reachable database. Python 3.10+ is needed for GaussDB, Oracle and DM8; MySQL does not need Python.</p>
+<pre><code class="language-bash">git clone https://github.com/vmayfuture/every-db-mcp.git
+cd every-db-mcp
+npm install
+</code></pre>
+<p>For Python-backed databases:</p>
+<pre><code class="language-bash">python -m pip install -r requirements.txt
+</code></pre>
+<p>Save this configuration as <code>db-config.json</code> in the project root, replacing placeholders with a dedicated account:</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;mysql-dev&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [{
+    &quot;id&quot;: &quot;mysql-dev&quot;,
+    &quot;type&quot;: &quot;mysql&quot;,
+    &quot;host&quot;: &quot;127.0.0.1&quot;,
+    &quot;port&quot;: 3306,
+    &quot;user&quot;: &quot;readonly_user&quot;,
+    &quot;password&quot;: &quot;replace-with-local-secret&quot;,
+    &quot;database&quot;: &quot;app_dev&quot;,
+    &quot;allowInsert&quot;: false,
+    &quot;allowUpdate&quot;: false,
+    &quot;allowDelete&quot;: false,
+    &quot;allowDDL&quot;: false
+  }]
+}
+</code></pre>
+<pre><code class="language-bash">npm run build
+npm start
+</code></pre>
+<p>The stdio server waits for MCP requests. A client can launch it automatically; manual startup is only needed for a launch check. Configure Codex with your actual absolute paths:</p>
+<pre><code class="language-toml">[mcp_servers.every-db-mcp]
+command = &quot;node&quot;
+args = [&quot;/absolute/path/to/every-db-mcp/dist/index.js&quot;]
+cwd = &quot;/absolute/path/to/every-db-mcp&quot;
+enabled = true
+</code></pre>
+<p>Windows paths can use <code>C:/tools/every-db-mcp/dist/index.js</code>. The working directory matters: the loader looks for <code>db-config.json</code> there and does not read <code>db-config.local.json</code>. A set <code>MYSQL_HOST</code> replaces file connections with one MySQL connection named <code>default</code>; remove it for file-based multi-database use.</p>
+<p>Full per-driver configurations, client JSON and troubleshooting: <a href="database-guides.html">database guides</a>. Detailed Chinese setup: <a href="index.html">README.md</a>.</p>
+<h2 id="use-cases-and-calls">Use cases and calls</h2>
+<p>Use cases include development data inspection, schema understanding, troubleshooting missing records and comparing queries across configured environments. These sample prompts are not recorded execution results:</p>
+<pre><code class="language-text">Use every-db-mcp to list configured connections. Test mysql-dev, then run
+SELECT 1 AS mcp_probe with maxRows 5. Report the selected ID and connection result.
+</code></pre>
+<pre><code class="language-text">Inspect the orders table in gaussdb-dev and explain the columns.
+Use only that connection; do not modify data.
+</code></pre>
+<div class="table-scroll" tabindex="0"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Arguments</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>db_list_databases</code></td>
+<td>none</td>
+<td>List configured connections</td>
+</tr>
+<tr>
+<td><code>db_test_connection</code></td>
+<td><code>database?</code></td>
+<td>Test a connection</td>
+</tr>
+<tr>
+<td><code>db_query</code></td>
+<td><code>sql</code>, <code>database?</code>, <code>maxRows?</code></td>
+<td>SELECT query</td>
+</tr>
+<tr>
+<td><code>db_get_table_structure</code></td>
+<td><code>tableName</code>, <code>database?</code></td>
+<td>Inspect structure</td>
+</tr>
+<tr>
+<td><code>db_execute</code></td>
+<td><code>sql</code>, <code>database?</code></td>
+<td>Permitted INSERT/UPDATE/DELETE/DDL</td>
+</tr>
+</tbody>
+</table></div>
+<p>An agent can call <code>db_test_connection</code> with <code>{"database":"mysql-dev"}</code>, then <code>db_query</code> with <code>{"database":"mysql-dev","sql":"SELECT 1 AS mcp_probe","maxRows":5}</code>. Oracle/DM8 probes use <code>SELECT 1 AS mcp_probe FROM DUAL</code>.</p>
+<p>Give connections unique environment-specific IDs and state the intended ID in project instructions. Omitting <code>database</code> selects <code>defaultDatabase</code>; it does not bind the current project automatically. Use the selected database's SQL dialect.</p>
+<h2 id="permissions-faq-and-limits">Permissions, FAQ and limits</h2>
+<p>Per-database <code>allowInsert</code>, <code>allowUpdate</code>, <code>allowDelete</code> and <code>allowDDL</code> control writes. Keep them explicitly false for read-only use and enforce privileges on the database account. SQL checks and limits do not replace database access control.</p>
+<p><strong>Why is file configuration ignored?</strong> Check the working directory and remove <code>MYSQL_HOST</code> when using the file's multiple connections.</p>
+<p><strong>What does Oracle schema mean?</strong> The bridge uses it as the <strong>service name</strong> in <code>host:port/service</code>, not as a table-owner selector.</p>
+<p><strong>Why does Python import fail?</strong> Set <code>PYTHON_PATH</code> to the interpreter containing the dependencies; it otherwise defaults to <code>python</code>. DM8 may need vendor runtime libraries.</p>
+<p>Driver implementations do not prove every database version/platform compatible or establish successful live testing of all four drivers. Python bridges create connections per subprocess request; persistent pooling behavior differs from MySQL.</p>
+<h2 id="development-and-license">Development and license</h2>
+<p><code>npm run build</code> compiles TypeScript. There is no automated <code>test</code> script. Test each actual target with a connection check and read-only query; this documentation does not claim new integration tests.</p>
+<p>MIT license: <a href="https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE">LICENSE</a>.</p></main>
+<footer><a href="https://github.com/vmayfuture/every-db-mcp">Source repository</a> · <a href="https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE">MIT License</a></footer>
+</body>
+</html>

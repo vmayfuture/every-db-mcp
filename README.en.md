@@ -2,6 +2,8 @@
 
 [中文](README.md) | [English](README.en.md)
 
+[Online documentation](https://vmayfuture.github.io/every-db-mcp/)
+
 every-db-mcp is a Model Context Protocol (MCP) stdio server for database queries, table structure inspection, connection tests and explicitly enabled writes. MySQL uses Node.js/mysql2; GaussDB, Oracle and Dameng DM8 use Python subprocess bridges. It selects configured database IDs, not automatic project detection or SQL dialect inference.
 
 ## Quick start

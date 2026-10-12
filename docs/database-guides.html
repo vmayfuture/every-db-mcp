@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>every-db-mcp — MySQL, GaussDB, Oracle and DM8 connection guides</title>
+<meta name="description" content="Source-backed connection templates and troubleshooting for every-db-mcp: Python bridges, Oracle service names, configuration precedence and MCP clients.">
+<link rel="canonical" href="https://vmayfuture.github.io/every-db-mcp/database-guides.html">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="every-db-mcp — MySQL, GaussDB, Oracle and DM8 connection guides">
+<meta property="og:description" content="Source-backed connection templates and troubleshooting for every-db-mcp: Python bridges, Oracle service names, configuration precedence and MCP clients.">
+<meta property="og:url" content="https://vmayfuture.github.io/every-db-mcp/database-guides.html">
+<meta property="og:site_name" content="every-db-mcp">
+<link rel="stylesheet" href="site.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"every-db-mcp","codeRepository":"https://github.com/vmayfuture/every-db-mcp","license":"https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE"}</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header><a class="brand" href="index.html">every-db-mcp</a>
+<nav aria-label="Documentation navigation"><a href="index.html" lang="zh-CN">中文</a><a href="en.html" lang="en">English</a><a href="database-guides.html">Database guides</a><a href="https://github.com/vmayfuture/every-db-mcp">GitHub</a></nav></header>
+<main id="main"><h1 id="database-connection-guides">Database connection guides / 数据库接入指南</h1>
+<p><a href="en.html">English overview</a> | <a href="index.html">中文说明</a></p>
+<p>These templates match the current loader and bridges; they are not successful live-test reports. Replace credentials, hosts, databases and schemas with your values. Use a dedicated account and enforce database privileges.</p>
+<h2 id="build-and-interpreter">Build and interpreter</h2>
+<pre><code class="language-bash">npm install
+npm run build
+</code></pre>
+<p>MySQL uses Node.js mysql2. GaussDB, Oracle and DM8 need Python 3.10+:</p>
+<pre><code class="language-bash">python -m pip install -r requirements.txt
+</code></pre>
+<p>The bridges use <code>PYTHON_PATH</code>, falling back to <code>python</code>. Select the interpreter where dependencies were installed. Current requirements pin py-opengauss, oracledb, dmPython and supporting packages; installation availability depends on OS/interpreter. Installed drivers do not prove working server connections.</p>
+<h2 id="configuration-loading">Configuration loading</h2>
+<p>Save one complete example below as <code>db-config.json</code> in the process working directory. To combine connections, merge the <code>databases</code> arrays into one object, retain unique IDs and choose an existing ID as <code>defaultDatabase</code>.</p>
+<p>Search order: <code>&lt;cwd&gt;/db-config.json</code>, <code>&lt;cwd&gt;/.db-config.json</code>, <code>~/.yg-multi-db-mcp.json</code>, <code>~/.config/yg-multi-db-mcp/config.json</code>. The loader does not read <code>db-config.local.json</code>. Setting <code>MYSQL_HOST</code> replaces file connections with the single MySQL connection ID <code>default</code>.</p>
+<p>Set permissions explicitly per connection. The environment loader supplies false global defaults when <code>ALLOW_INSERT_OPERATION</code>, <code>ALLOW_UPDATE_OPERATION</code>, <code>ALLOW_DELETE_OPERATION</code> and <code>ALLOW_DDL_OPERATION</code> are absent; explicit connection flags avoid depending on file-level default merging. SQL checks do not replace account privileges.</p>
+<h2 id="mysql">mysql</h2>
+<p>MySQL uses Node.js mysql2. <code>database</code> selects the database; no Python is needed.</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;mysql-dev&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [
+    {
+      &quot;id&quot;: &quot;mysql-dev&quot;,
+      &quot;type&quot;: &quot;mysql&quot;,
+      &quot;host&quot;: &quot;127.0.0.1&quot;,
+      &quot;port&quot;: 3306,
+      &quot;user&quot;: &quot;readonly_user&quot;,
+      &quot;password&quot;: &quot;replace-with-local-secret&quot;,
+      &quot;database&quot;: &quot;app_dev&quot;,
+      &quot;allowInsert&quot;: false,
+      &quot;allowUpdate&quot;: false,
+      &quot;allowDelete&quot;: false,
+      &quot;allowDDL&quot;: false
+    }
+  ]
+}
+</code></pre>
+<p>Test <code>mysql-dev</code> using db_test_connection, then query <code>SELECT 1 AS mcp_probe</code> using that same ID.</p>
+<h2 id="gaussdb">gaussdb</h2>
+<p>GaussDB uses <code>py_opengauss</code>. <code>database</code> selects the database; <code>schema</code> sets search_path. Use your actual port; 8000 is an example. Server/connector compatibility must be checked separately.</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;gaussdb-dev&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [
+    {
+      &quot;id&quot;: &quot;gaussdb-dev&quot;,
+      &quot;type&quot;: &quot;gaussdb&quot;,
+      &quot;host&quot;: &quot;127.0.0.1&quot;,
+      &quot;port&quot;: 8000,
+      &quot;user&quot;: &quot;readonly_user&quot;,
+      &quot;password&quot;: &quot;replace-with-local-secret&quot;,
+      &quot;database&quot;: &quot;app_dev&quot;,
+      &quot;schema&quot;: &quot;public&quot;,
+      &quot;allowInsert&quot;: false,
+      &quot;allowUpdate&quot;: false,
+      &quot;allowDelete&quot;: false,
+      &quot;allowDDL&quot;: false
+    }
+  ]
+}
+</code></pre>
+<p>Test <code>gaussdb-dev</code> using db_test_connection, then query <code>SELECT 1 AS mcp_probe</code> using that same ID.</p>
+<h2 id="oracle">oracle</h2>
+<p>Oracle uses Python oracledb in default Thin mode; this bridge does not initialize Thick mode. <strong>schema supplies the service name</strong> in host:port/service, not a table owner or SID. The database field is unused. Use qualified table names and suitable privileges for other owners.</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;oracle-dev&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [
+    {
+      &quot;id&quot;: &quot;oracle-dev&quot;,
+      &quot;type&quot;: &quot;oracle&quot;,
+      &quot;host&quot;: &quot;127.0.0.1&quot;,
+      &quot;port&quot;: 1521,
+      &quot;user&quot;: &quot;readonly_user&quot;,
+      &quot;password&quot;: &quot;replace-with-local-secret&quot;,
+      &quot;schema&quot;: &quot;ORCLPDB1&quot;,
+      &quot;allowInsert&quot;: false,
+      &quot;allowUpdate&quot;: false,
+      &quot;allowDelete&quot;: false,
+      &quot;allowDDL&quot;: false
+    }
+  ]
+}
+</code></pre>
+<p>Test <code>oracle-dev</code> using db_test_connection, then query <code>SELECT 1 AS mcp_probe FROM DUAL</code> using that same ID.</p>
+<h2 id="dm8">dm8</h2>
+<p>DM8 uses dmPython. <code>schema</code> is applied using SET SCHEMA for queries and writes. Connection testing does not apply it, so verify schema access with a subsequent query. Use a trusted configured schema identifier. Vendor runtime libraries may be required; the bridge looks for an installed dmssl directory in Python site-packages and prepends it to PATH before importing dmPython. The database field is unused.</p>
+<pre><code class="language-json">{
+  &quot;defaultDatabase&quot;: &quot;dm8-dev&quot;,
+  &quot;defaultAllowInsert&quot;: false,
+  &quot;defaultAllowUpdate&quot;: false,
+  &quot;defaultAllowDelete&quot;: false,
+  &quot;defaultAllowDDL&quot;: false,
+  &quot;databases&quot;: [
+    {
+      &quot;id&quot;: &quot;dm8-dev&quot;,
+      &quot;type&quot;: &quot;dm8&quot;,
+      &quot;host&quot;: &quot;127.0.0.1&quot;,
+      &quot;port&quot;: 5236,
+      &quot;user&quot;: &quot;readonly_user&quot;,
+      &quot;password&quot;: &quot;replace-with-local-secret&quot;,
+      &quot;schema&quot;: &quot;APP&quot;,
+      &quot;allowInsert&quot;: false,
+      &quot;allowUpdate&quot;: false,
+      &quot;allowDelete&quot;: false,
+      &quot;allowDDL&quot;: false
+    }
+  ]
+}
+</code></pre>
+<p>Test <code>dm8-dev</code> using db_test_connection, then query <code>SELECT 1 AS mcp_probe FROM DUAL</code> using that same ID.</p>
+<h2 id="mcp-clients">MCP clients</h2>
+<p>Codex file-based configuration:</p>
+<pre><code class="language-toml">[mcp_servers.every-db-mcp]
+command = &quot;node&quot;
+args = [&quot;C:/tools/every-db-mcp/dist/index.js&quot;]
+cwd = &quot;C:/tools/every-db-mcp&quot;
+enabled = true
+
+[mcp_servers.every-db-mcp.env]
+PYTHON_PATH = &quot;C:/tools/every-db-mcp/.venv/Scripts/python.exe&quot;
+</code></pre>
+<p>Use your actual paths; omit PYTHON_PATH for MySQL-only use. On macOS/Linux use corresponding paths such as <code>/opt/every-db-mcp/.venv/bin/python</code>. Do not set MYSQL_HOST for file-based multi-database access.</p>
+<p>For clients accepting mcpServers JSON and a process working directory:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;every-db-mcp&quot;: {
+      &quot;command&quot;: &quot;node&quot;,
+      &quot;args&quot;: [&quot;C:/tools/every-db-mcp/dist/index.js&quot;],
+      &quot;cwd&quot;: &quot;C:/tools/every-db-mcp&quot;,
+      &quot;env&quot;: {&quot;PYTHON_PATH&quot;: &quot;C:/tools/every-db-mcp/.venv/Scripts/python.exe&quot;}
+    }
+  }
+}
+</code></pre>
+<p>Client schemas differ. If cwd is unsupported, use a supported user-level configuration path. An absolute args path does not change the working directory. Reload/restart the host as required.</p>
+<p>For single MySQL, environment configuration avoids working-directory dependence:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;every-db-mcp&quot;: {
+      &quot;command&quot;: &quot;node&quot;,
+      &quot;args&quot;: [&quot;C:/tools/every-db-mcp/dist/index.js&quot;],
+      &quot;env&quot;: {
+        &quot;MYSQL_HOST&quot;: &quot;127.0.0.1&quot;,
+        &quot;MYSQL_PORT&quot;: &quot;3306&quot;,
+        &quot;MYSQL_USER&quot;: &quot;readonly_user&quot;,
+        &quot;MYSQL_PASS&quot;: &quot;replace-with-local-secret&quot;,
+        &quot;MYSQL_DB&quot;: &quot;app_dev&quot;,
+        &quot;ALLOW_INSERT_OPERATION&quot;: &quot;false&quot;,
+        &quot;ALLOW_UPDATE_OPERATION&quot;: &quot;false&quot;,
+        &quot;ALLOW_DELETE_OPERATION&quot;: &quot;false&quot;,
+        &quot;ALLOW_DDL_OPERATION&quot;: &quot;false&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>This creates ID <code>default</code>, not the file example's IDs.</p>
+<h2 id="verify-and-troubleshoot">Verify and troubleshoot</h2>
+<pre><code class="language-text">List every-db-mcp connections. Test oracle-dev, then run
+SELECT 1 AS mcp_probe FROM DUAL on oracle-dev with maxRows 5.
+Report the ID, database type and any error; do not modify data.
+</code></pre>
+<p>Use the appropriate ID and SQL probe. The tool's database parameter selects the ID; type chooses the driver; omission selects defaultDatabase. Projects are not automatically bound to a connection. Keep IDs and rules in project instructions, not credentials.</p>
+<ul>
+<li>No configuration: check process cwd and supported filenames.</li>
+<li>Only MySQL appears: remove inherited/client MYSQL_HOST for file connections.</li>
+<li>Python import error: install dependencies into the PYTHON_PATH interpreter.</li>
+<li>Oracle service error: verify listener host, port and service name in schema.</li>
+<li>GaussDB/DM8 schema error: check schema name and privileges.</li>
+<li>Driver installed but connection fails: verify network, version compatibility, credentials and vendor libraries separately.</li>
+</ul>
+<p>Keep local credentials out of public commits. Python bridges create a connection per subprocess request, so pooling differs from MySQL. SQL dialects differ, and row limits are not isolation. The repository has no automated test script; perform a real connection test and read-only query for each actual target. No live database validation is claimed by these documentation examples.</p></main>
+<footer><a href="https://github.com/vmayfuture/every-db-mcp">Source repository</a> · <a href="https://github.com/vmayfuture/every-db-mcp/blob/main/LICENSE">MIT License</a></footer>
+</body>
+</html>

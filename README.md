@@ -2,6 +2,8 @@
 
 [中文](README.md) | [English](README.en.md)
 
+[在线文档](https://vmayfuture.github.io/every-db-mcp/)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green.svg)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
