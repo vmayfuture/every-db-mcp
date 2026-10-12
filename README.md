@@ -1,4 +1,6 @@
-# every-db-mcp
+# every-db-mcp — MySQL、GaussDB、Oracle、DM8 多数据库 MCP 服务器
+
+[中文](README.md) | [English](README.en.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green.svg)](https://nodejs.org/)
@@ -466,3 +468,11 @@ npm start
 ---
 
 **注意**: 本项目仅供学习和开发使用。在生产环境中使用时，请确保遵循最佳安全实践，包括使用只读权限、定期轮换密码、启用 SSL 连接等。
+
+## 接入指南与常见问题
+
+完整配置、客户端启动目录和只读探测 SQL 见 [数据库接入指南](docs/database-guides.md)。适合研发环境表结构理解、订单数据排查和跨数据库结果比较；调用时指定数据库 ID，并使用目标数据库方言。
+
+- **为什么只看见 MySQL？** `MYSQL_HOST` 会替换文件中的连接列表；多数据库接入请移除单库环境配置。
+- **Oracle 的 schema 是什么？** 当前驱动把它用作 service name，不是表所属用户。
+- **四种驱动都已实测吗？** 驱动实现不证明全部版本和平台兼容，请分别验证真实连接和只读查询。
